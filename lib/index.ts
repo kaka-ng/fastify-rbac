@@ -161,7 +161,7 @@ const plugin: FastifyPluginAsync<FastifyRBACOptions> = async function (fastify, 
 
 export const FastifyRBAC = FastifyPlugin(plugin, {
   fastify: '3.x',
-  name: 'fastify-rbac',
+  name: '@kakang/fastify-rbac',
   dependencies: []
 })
 export default FastifyRBAC
