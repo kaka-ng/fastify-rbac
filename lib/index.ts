@@ -1,5 +1,5 @@
 import * as Validator from '@kakang/validator'
-import { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest, RouteOptions } from 'fastify'
 import FastifyPlugin from 'fastify-plugin'
 
 /**
@@ -33,6 +33,7 @@ export interface RBACRouteConfig {
 
 export type RetrieveAccountRoles = (request: FastifyRequest, reply: FastifyReply) => string[] | Promise<string[]>
 export type CheckRBAC = (routeRoles: string[], accountRoles: string[]) => boolean | Promise<boolean>
+export type ComputeConstraints = (routeOptions: RouteOptions) => { [key: string]: any }
 
 export interface FastifyRBACOptions {
   // retrieve account roles
@@ -43,6 +44,8 @@ export interface FastifyRBACOptions {
   forbiddenMessage?: string
   // additional privilege
   additionalPrivileges?: string[]
+  // compute key based on constraint
+  computeConstraints?: ComputeConstraints
 }
 
 declare module 'fastify' {
@@ -97,15 +100,20 @@ const plugin: FastifyPluginAsync<FastifyRBACOptions> = async function (fastify, 
 
   // collect all roles
   fastify.addHook('onRoute', function (routeOptions) {
+    // we before looping
+    const config = routeOptions.config as RBACRouteConfig
+    if (!Validator.isExist(config)) return
+    if (!Validator.isExist(config.rbac)) return
+    if (!Validator.isExist(config.rbac.resource)) return
+
     const methods = Array.isArray(routeOptions.method) ? routeOptions.method : [routeOptions.method]
+    if (typeof options.computeConstraints === 'function') {
+      routeOptions.constraints = Object.assign({}, routeOptions.constraints, options.computeConstraints(routeOptions))
+    }
     for (let i = 0; i < methods.length; i++) {
       let key = `${methods[i] as string}:${routeOptions.path}`
       if (Validator.isExist(routeOptions.constraints)) key += ` - ${JSON.stringify(routeOptions.constraints)}`
-      const config = routeOptions.config as RBACRouteConfig
       if (routeRBAC.has(key)) continue
-      if (!Validator.isExist(config)) continue
-      if (!Validator.isExist(config.rbac)) continue
-      if (!Validator.isExist(config.rbac.resource)) continue
       // store the key for future use
       config.rbac.key = key
 
