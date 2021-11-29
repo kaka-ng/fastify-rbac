@@ -58,32 +58,47 @@ declare module 'fastify' {
   }
 }
 
-export function findBestMatch (a: string[], b: string[]): string | null {
-  if (!Array.isArray(a) || !Array.isArray(b)) return null
-  for (let i = 0; i < a.length; i++) {
-    const aArr = a[i].split(':')
-    const hasRole = aArr.length >= 3
-    const ares = aArr.splice(0, 1)[0]
-    const arole = hasRole ? aArr.splice(0, 1)[0] : null
-    const aoperation = aArr.join(':')
+export interface RBAC { resource: string, role: string, operation: string }
+export function sto (s: string): RBAC {
+  const arr = s.split(':')
+  const hasRole = arr.length >= 3
+  return {
+    resource: arr.splice(0, 1)[0],
+    role: hasRole ? arr.splice(0, 1)[0] : 'null',
+    operation: arr.join(':')
+  }
+}
 
-    for (let j = 0; j < b.length; j++) {
-      const bArr = b[j].split(':')
-      const hasRole = bArr.length >= 3
-      const bres = bArr.splice(0, 1)[0]
-      const brole = hasRole ? bArr.splice(0, 1)[0] : null
-      const boperation = bArr.join(':')
-      // check resource first
-      const resourceMatch = (ares === '*' && bres !== null) || (bres === '*' && ares !== null) || ares === bres
-      // check role
-      const roleMatch = (arole === '*' && brole !== null) || (brole === '*' && arole !== null) || ((arole == null) && (brole == null)) || arole === brole
-      // check operation
-      const operationMatch = aoperation === '*' || boperation === '*' || aoperation === boperation
-      if (resourceMatch && roleMatch && operationMatch) return a[i]
+// supported means the resource support which role
+// owned means you have which role
+//
+// This function used to find the best match owned
+// to match the supported list
+export function findBestMatch (supported: string[], owned: string[]): { supported: string, owned: string, weight: number } | null {
+  const stack: Array<{ supported: string, owned: string, weight: number }> = []
+  // at least weight 3 before pushing inside stack
+  for (let i = 0; i < supported.length; i++) {
+    const a = sto(supported[i])
+    for (let j = 0; j < owned.length; j++) {
+      const b = sto(owned[j])
+      const resource = isMatch(a.resource, b.resource)
+      const role = isMatch(a.role, b.role)
+      const operation = isMatch(a.operation, b.operation)
+      const weight = 9 - (resource.asterisk + resource.null + role.asterisk + role.null + operation.asterisk + operation.null)
+      if (resource.match && role.match && operation.match) {
+        stack.push({ supported: supported[i], owned: owned[j], weight })
+      }
     }
   }
-  if (a.includes('*') || b.includes('*')) return '*'
-  return null
+  const result = stack.sort((a, b) => b.weight - a.weight).shift()
+  return result ?? null
+}
+
+function isMatch (a: string, b: string): { match: boolean, asterisk: number, null: number } {
+  const match = a === b || (a === '*' && b !== 'null') || (b === '*' && a !== 'null')
+  const asterisk = a === '*' && b === '*' ? 2 : a === '*' || b === '*' ? 1 : 0
+  const nul = a === 'null' && b === 'null' ? 2 : a === 'null' || b === 'null' ? 1 : 0
+  return { match, asterisk, null: nul }
 }
 
 const plugin: FastifyPluginAsync<FastifyRBACOptions> = async function (fastify, options) {

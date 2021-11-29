@@ -10,33 +10,42 @@ t.test('findBestMatch', function (t) {
     t.equal(result, null)
   })
 
-  t.test('* should match', function (t) {
+  t.test('* should not match', function (t) {
     t.plan(1)
     const result = findBestMatch(['account:admin:read', 'account:read'], ['*'])
-    t.equal(result, '*')
+    t.equal(result, null)
   })
 
   t.test('*:* should match', function (t) {
-    t.plan(1)
+    t.plan(2)
     const result = findBestMatch(['account:admin:read', 'account:read'], ['*:*'])
-    t.equal(result, 'account:read')
+    t.equal(result?.supported, 'account:read')
+    t.equal(result?.owned, '*:*')
   })
 
   t.test('*:*:* should match', function (t) {
-    t.plan(1)
+    t.plan(2)
     const result = findBestMatch(['account:admin:read', 'account:read'], ['*:*:*'])
-    t.equal(result, 'account:admin:read')
+    t.equal(result?.supported, 'account:admin:read')
+    t.equal(result?.owned, '*:*:*')
   })
 
   t.test('account:admin:read', function (t) {
-    t.plan(1)
+    t.plan(2)
     const result = findBestMatch(['account:admin:read', 'account:read'], ['account:admin:read'])
-    t.equal(result, 'account:admin:read')
+    t.equal(result?.supported, 'account:admin:read')
+    t.equal(result?.owned, 'account:admin:read')
   })
 
-  t.test('FIFO', function (t) {
-    t.plan(1)
-    const result = findBestMatch(['account:admin:read', 'account:read'], ['account:read', 'account:admin:read'])
-    t.equal(result, 'account:admin:read')
+  t.test('detail row should match first', function (t) {
+    t.plan(4)
+    let result
+    result = findBestMatch(['account:admin:read', 'account:read'], ['account:read', 'account:admin:read'])
+    t.equal(result?.supported, 'account:admin:read')
+    t.equal(result?.owned, 'account:admin:read')
+
+    result = findBestMatch(['account:read', 'account:admin:read'], ['account:read', 'account:admin:read'])
+    t.equal(result?.supported, 'account:admin:read')
+    t.equal(result?.owned, 'account:admin:read')
   })
 })
