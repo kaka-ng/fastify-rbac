@@ -82,7 +82,7 @@ export function findBestMatch (supported: string[], owned: string[]): { supporte
     for (let j = 0; j < owned.length; j++) {
       const b = sto(owned[j])
       const resource = isMatch(a.resource, b.resource)
-      const role = isMatch(a.role, b.role)
+      const role = isMatch(a.role, b.role, false)
       const operation = isMatch(a.operation, b.operation)
       const weight = 9 - (resource.asterisk + resource.null + role.asterisk + role.null + operation.asterisk + operation.null)
       if (resource.match && role.match && operation.match) {
@@ -94,8 +94,8 @@ export function findBestMatch (supported: string[], owned: string[]): { supporte
   return result ?? null
 }
 
-function isMatch (a: string, b: string): { match: boolean, asterisk: number, null: number } {
-  const match = a === b || (a === '*' && b !== 'null') || (b === '*' && a !== 'null')
+function isMatch (a: string, b: string, nonNull: boolean = true): { match: boolean, asterisk: number, null: number } {
+  const match = a === b || (a === '*' && b !== 'null') || (b === '*' && a !== 'null') || (a === '*' && b === 'null' && !nonNull) || (b === '*' && a === 'null' && !nonNull)
   const asterisk = a === '*' && b === '*' ? 2 : a === '*' || b === '*' ? 1 : 0
   const nul = a === 'null' && b === 'null' ? 2 : a === 'null' || b === 'null' ? 1 : 0
   return { match, asterisk, null: nul }

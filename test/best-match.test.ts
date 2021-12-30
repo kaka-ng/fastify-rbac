@@ -3,7 +3,7 @@ import { findBestMatch } from '../lib'
 
 t.plan(1)
 t.test('findBestMatch', function (t) {
-  t.plan(6)
+  t.plan(7)
   t.test('no match', function (t) {
     t.plan(1)
     const result = findBestMatch([], [])
@@ -27,6 +27,13 @@ t.test('findBestMatch', function (t) {
     t.plan(2)
     const result = findBestMatch(['account:admin:read', 'account:read'], ['*:*:*'])
     t.equal(result?.supported, 'account:admin:read')
+    t.equal(result?.owned, '*:*:*')
+  })
+
+  t.test('*:*:* should match account:read', function (t) {
+    t.plan(2)
+    const result = findBestMatch(['account:read'], ['*:*:*'])
+    t.equal(result?.supported, 'account:read')
     t.equal(result?.owned, '*:*:*')
   })
 
