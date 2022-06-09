@@ -183,7 +183,7 @@ const plugin: FastifyPluginAsync<FastifyRBACOptions> = async function (fastify, 
 }
 
 export const FastifyRBAC = FastifyPlugin(plugin, {
-  fastify: '3.x',
+  fastify: '4.x',
   name: '@kakang/fastify-rbac',
   dependencies: []
 })

@@ -16,7 +16,7 @@ t.test('route rbac', async function (t) {
   t.test('fastify.rbac', function (t) {
     t.plan(2)
     t.equal(fastify.rbac.roles.length, 1 + 3)
-    t.same(Array.from(fastify.rbac.routeRBAC.keys()), ['GET:/', 'POST:/', 'PUT:/'])
+    t.same(Array.from(fastify.rbac.routeRBAC.keys()), ['GET:/', 'POST:/', 'PUT:/', 'HEAD:/'])
   })
 
   t.test('match rbac', async function (t) {
@@ -42,7 +42,7 @@ t.test('route rbac', async function (t) {
 })
 
 t.test('route compute constraint', async function (t) {
-  t.plan(3)
+  t.plan(4)
   const fastify: FastifyInstance = Fastify({
     constraints: {
       foo: {
