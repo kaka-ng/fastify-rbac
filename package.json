@@ -17,12 +17,15 @@
     "clean": "npx rimraf \"lib/**/*.js\" \"lib/**/*.map\" \"lib/**/*.d.ts\" \"test/**/*.js\" \"test/**/*.map\" \"test/**/*.d.ts\"",
     "lint": "eslint --ext .ts lib test",
     "lint:fix": "npm run lint -- --fix",
-    "build": "rollup -c",
-    "build:tsc": "tsc -b",
+    "prebuild": "npm run clean",
+    "build": "npm run build:mjs && npm run build:cjs",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:mjs": "tsc -p tsconfig.mjs.json",
     "unit": "tap",
     "test": "npm run lint && npm run unit",
-    "coverage": "tap --coverage --coverage-report=lcovonly",
-    "prepublishOnly": "npm run build"
+    "coverage": "tap --coverage-report=lcovonly",
+    "prepublishOnly": "npm run build",
+    "postpublish": "npm run clean"
   },
   "publishConfig": {
     "access": "public",
@@ -35,9 +38,10 @@
   "author": "KaKa",
   "license": "GPL-3.0",
   "devDependencies": {
-    "@rollup/plugin-typescript": "^8.3.0",
-    "@types/tap": "^15.0.5",
+    "@types/node": "^17.0.40",
+    "@types/tap": "^15.0.7",
     "@typescript-eslint/eslint-plugin": "^4.0.1",
+    "@typescript-eslint/parser": "^4.0.0",
     "eslint": "^7.12.1",
     "eslint-config-standard-with-typescript": "^21.0.1",
     "eslint-plugin-import": "^2.22.1",
@@ -45,7 +49,6 @@
     "eslint-plugin-promise": "^5.0.0",
     "fastify": "^3.22.1",
     "prettier": "^2.4.1",
-    "rollup": "^2.58.1",
     "tap": "^16.0.0",
     "ts-node": "^10.4.0",
     "typescript": "^4.4.4"
