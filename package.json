@@ -55,6 +55,6 @@
   },
   "dependencies": {
     "@kakang/validator": "^0.1.0",
-    "fastify-plugin": "^3.0.0"
+    "fastify-plugin": "^4.0.0"
   }
 }
