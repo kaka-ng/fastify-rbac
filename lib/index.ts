@@ -134,13 +134,12 @@ const plugin: FastifyPluginAsync<FastifyRBACOptions> = async function (fastify, 
 
       // find resource
       const resourceName = config.rbac.resource
-      let resource = hierarchy.has(resourceName) ? hierarchy.get(resourceName) as string[] : ['*']
+      let resource = hierarchy.has(resourceName) ? hierarchy.get(resourceName) as string[] : []
       // normalize operations
-      const operations = Validator.isExist(config.rbac.operations) && Validator.isArray(config.rbac.operations) ? config.rbac.operations : ['*']
+      const operations = Validator.isExist(config.rbac.operations) && Validator.isArray(config.rbac.operations) ? config.rbac.operations : []
       // store operations in rbac hierarchy
       resource = resource.concat(operations)
       hierarchy.set(resourceName, resource)
-      rbac.roles.push(`${resourceName}:*`)
 
       // compute roles
       const roles = operations.map((o) => { return `${resourceName}:${o}` })
