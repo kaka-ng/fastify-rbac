@@ -16,7 +16,7 @@ t.test('route rbac', async function (t) {
   t.test('fastify.rbac', function (t) {
     t.plan(2)
     t.equal(fastify.rbac.roles.length, 3)
-    t.same(Array.from(fastify.rbac.routeRBAC.keys()), ['GET:/', 'POST:/', 'PUT:/', 'HEAD:/'])
+    t.same(Array.from(fastify.rbac.routeRBAC.keys()), ['GET:/', 'HEAD:/', 'POST:/', 'PUT:/'])
   })
 
   t.test('match rbac', async function (t) {
