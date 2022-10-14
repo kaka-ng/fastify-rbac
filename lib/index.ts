@@ -1,5 +1,5 @@
 import * as Validator from '@kakang/validator'
-import { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest, RouteOptions } from 'fastify'
+import { FastifyContextConfig, FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest, RouteOptions } from 'fastify'
 import FastifyPlugin from 'fastify-plugin'
 
 /**
@@ -56,6 +56,11 @@ declare module 'fastify' {
       hierarchy: Map<string, string[]>
     }
   }
+}
+
+// TODO: remove this polyfill after fastify update it's types
+interface CustomFastifyRequest extends FastifyRequest {
+  routeConfig: FastifyContextConfig & RBACRouteConfig
 }
 
 export interface RBAC { resource: string, role: string, operation: string }
@@ -149,18 +154,18 @@ const plugin: FastifyPluginAsync<FastifyRBACOptions> = async function (fastify, 
   })
 
   // we want to break the route handling as soon as possible
-  fastify.addHook<{}, RBACRouteConfig>('onRequest', async function (this: FastifyInstance, request, reply) {
+  fastify.addHook<{}, RBACRouteConfig>('onRequest', async function (this: FastifyInstance, request: CustomFastifyRequest, reply: FastifyReply) {
     // skip onRequest if rbac is not set
-    if (!Validator.isExist(reply.context.config.rbac)) return null
+    if (!Validator.isExist(request.routeConfig.rbac)) return null
     // skip when skip is true
-    if (reply.context.config.rbac.skip === true) return null
-    if (!Validator.isExist(reply.context.config.rbac.resource)) return null
-    const key = reply.context.config.rbac.key ?? `${request.method}:${request.routerPath}`
+    if (request.routeConfig.rbac.skip === true) return null
+    if (!Validator.isExist(request.routeConfig.rbac.resource)) return null
+    const key = request.routeConfig.rbac.key ?? `${request.method}:${request.routerPath}`
     const routeRoles = routeRBAC.get(key)
     // skip when no roles is specified
     if (!Validator.isExist(routeRoles)) return null
     const accountRoles = await options.retrieveAccountRoles.call(this, request, reply)
-    const checkRBAC = reply.context.config.rbac.checkRBAC ?? options.checkRBAC
+    const checkRBAC = request.routeConfig.rbac.checkRBAC ?? options.checkRBAC
     const passed = await checkRBAC.call(this, routeRoles, accountRoles)
     if (!passed) {
       const err: Error & { statusCode?: number } = new Error(options.forbiddenMessage)
@@ -168,7 +173,7 @@ const plugin: FastifyPluginAsync<FastifyRBACOptions> = async function (fastify, 
       throw err
     }
     return null
-  })
+  } as any)
 
   fastify.addHook('onReady', async function () {
     // dedup rbac roles
